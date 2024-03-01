@@ -1,28 +1,33 @@
 import axios, { AxiosResponse, AxiosError } from 'axios'
 import { AIMessage, BaseMessage } from '@langchain/core/messages'
-import { ChatResult } from '@langchain/core/outputs'
+import { BaseLLMParams } from '@langchain/core/language_models/llms'
+import { OpenAIChatInput } from '@langchain/openai'
 import { BaseChatModel, BaseChatModelCallOptions, BaseChatModelParams } from '@langchain/core/language_models/chat_models'
 import { CallbackManagerForLLMRun } from '@langchain/core/callbacks/manager'
+import { ChatResult } from '@langchain/core/outputs'
 
 export interface LlmGwOptions extends BaseChatModelCallOptions {}
 
 export interface LlmGwParams extends BaseChatModelParams {
     apiKey: string
     modelname: string
+    temperature: number
 }
 
 export class LlmGw extends BaseChatModel<LlmGwOptions> {
     private apiKey: string
     private modelname: string
+    private temperature: number
 
     static lc_name(): string {
         return 'LlmGw'
     }
 
-    constructor(fields: LlmGwParams) {
+    constructor(fields: LlmGwParams & BaseLLMParams & Partial<OpenAIChatInput>) {
         super(fields)
         this.apiKey = fields.apiKey
         this.modelname = fields.modelname
+        this.temperature = fields.temperature
     }
 
     private get apiUrl(): string {
@@ -53,14 +58,13 @@ export class LlmGw extends BaseChatModel<LlmGwOptions> {
                     content: messages[0].content
                 }
             ],
-            model_id: this.modelname
+            model_id: this.modelname,
+            temperature: this.temperature
         }
 
         try {
             const response: AxiosResponse = await axios.post(this.apiUrl, requestData, { headers })
-
             // Handle the response data as needed
-
             // Mocking the ChatResult structure, adjust as needed
             const chatResult: ChatResult = {
                 generations: [
@@ -75,7 +79,6 @@ export class LlmGw extends BaseChatModel<LlmGwOptions> {
                     }
                 }
             }
-
             return chatResult
         } catch (error) {
             const axiosError: AxiosError = error

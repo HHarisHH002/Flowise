@@ -2052,7 +2052,6 @@ export class App {
             const nodeInstanceFilePath = this.nodesPool.componentNodes[nodeToExecuteData.name].filePath as string
             const nodeModule = await import(nodeInstanceFilePath)
             const nodeInstance = new nodeModule.nodeClass({ sessionId })
-
             let result = isStreamValid
                 ? await nodeInstance.run(nodeToExecuteData, incomingInput.question, {
                       chatId,
@@ -2078,7 +2077,6 @@ export class App {
                   })
 
             result = typeof result === 'string' ? { text: result } : result
-
             // Retrieve threadId from assistant if exists
             if (typeof result === 'object' && result.assistant) {
                 sessionId = result.assistant.threadId

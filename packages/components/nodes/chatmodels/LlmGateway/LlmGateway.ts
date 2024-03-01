@@ -1,5 +1,7 @@
 import { ICommonObject, INode, INodeData, INodeParams } from '../../../src/Interface'
+import { OpenAIChatInput } from '@langchain/openai'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
+import { BaseLLMParams } from '@langchain/core/language_models/llms'
 import { BaseCache } from 'langchain/schema'
 import { LlmGw, LlmGwParams } from './llm'
 
@@ -49,6 +51,14 @@ class LlmGateway_ChatModels implements INode {
                     {
                         label: 'Databricks_GPT35_Turbo',
                         name: 'Databricks_GPT35_Turbo'
+                    },
+                    {
+                        label: 'Databricks_GPT35_Turbo_16k',
+                        name: 'Databricks_GPT35_Turbo_16k'
+                    },
+                    {
+                        label: 'Databricks_GPT4',
+                        name: 'Databricks_GPT4'
                     }
                 ],
                 default: 'Databricks_GPT35_Turbo',
@@ -110,10 +120,17 @@ class LlmGateway_ChatModels implements INode {
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const LlmGatewayApiKey = getCredentialParam('LlmGatewayApiKey', credentialData, nodeData)
 
-        const obj: LlmGwParams & { llmgatewayConfig?: llmgatewayConfig } = {
+        const obj: LlmGwParams & BaseLLMParams & Partial<OpenAIChatInput> & { llmgatewayConfig?: llmgatewayConfig } = {
+            temperature: parseFloat(temperature),
             apiKey: LlmGatewayApiKey,
             modelname: modelName
         }
+
+        if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)
+        if (frequencyPenalty) obj.frequencyPenalty = parseFloat(frequencyPenalty)
+        if (presencePenalty) obj.presencePenalty = parseFloat(presencePenalty)
+        if (timeout) obj.timeout = parseInt(timeout, 10)
+        if (cache) obj.cache = cache
 
         const model = new LlmGw(obj)
         return model
