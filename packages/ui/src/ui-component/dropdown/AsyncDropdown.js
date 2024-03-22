@@ -75,7 +75,7 @@ export const AsyncDropdown = ({
             } else {
                 names = credentialNames[0]
             }
-            const resp = await credentialsApi.getCredentialsByName(names)
+            const resp = await credentialsApi.getCredentialsByName(localStorage.getItem('token'), names)
             if (resp.data) {
                 const returnList = []
                 for (let i = 0; i < resp.data.length; i += 1) {

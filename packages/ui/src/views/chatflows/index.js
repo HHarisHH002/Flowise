@@ -78,8 +78,9 @@ const Chatflows = () => {
     }
 
     useEffect(() => {
-        getAllChatflowsApi.request()
-
+        if (localStorage.getItem('token') !== null) {
+            getAllChatflowsApi.request(localStorage.getItem('token'))
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 

@@ -3,6 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import cors from 'cors'
 import http from 'http'
+import jwt, { JwtPayload } from 'jsonwebtoken'
 import * as fs from 'fs'
 import basicAuth from 'express-basic-auth'
 import contentDisposition from 'content-disposition'
@@ -138,7 +139,17 @@ export class App {
         const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT ?? '50mb'
         this.app.use(express.json({ limit: flowise_file_size_limit }))
         this.app.use(express.urlencoded({ limit: flowise_file_size_limit, extended: true }))
-
+        // this.app.use(
+        //     session({
+        //         secret: 'flowisesessionsecret',
+        //         resave: false,
+        //         saveUninitialized: false,
+        //         cookie: {
+        //             httpOnly: true,
+        //             secure: false // set this to true on production
+        //         }
+        //     })
+        // )
         if (process.env.NUMBER_OF_PROXIES && parseInt(process.env.NUMBER_OF_PROXIES) > 0)
             this.app.set('trust proxy', parseInt(process.env.NUMBER_OF_PROXIES))
 
@@ -173,6 +184,7 @@ export class App {
                 users: { [username]: password }
             })
             const whitelistURLs = [
+                '/api/v1/allchatflows/',
                 '/api/v1/verify/apikey/',
                 '/api/v1/chatflows/apikey/',
                 '/api/v1/public-chatflows',
@@ -358,9 +370,14 @@ export class App {
         // ----------------------------------------
 
         // Get all chatflows
-        this.app.get('/api/v1/chatflows', async (req: Request, res: Response) => {
-            const chatflows: IChatFlow[] = await getAllChatFlow()
-            return res.json(chatflows)
+        this.app.get('/api/v1/chatflows/:token', async (req: Request, res: Response) => {
+            const auth_token: string = req.params.token as string
+            const decoded = jwt.decode(auth_token) as JwtPayload
+            const chatflow = await this.AppDataSource.getRepository(ChatFlow).findBy({
+                userid: decoded['onpremisessamaccountname']
+            })
+            if (chatflow) return res.json(chatflow)
+            return res.status(404).send(`Chatflows not found`)
         })
 
         // Get specific chatflow via api key
@@ -383,7 +400,7 @@ export class App {
         })
 
         // Get specific chatflow via id
-        this.app.get('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
+        this.app.get('/api/v1/chatflows/id/:id', async (req: Request, res: Response) => {
             const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy({
                 id: req.params.id
             })
@@ -423,8 +440,12 @@ export class App {
         })
 
         // Save chatflow
-        this.app.post('/api/v1/chatflows', async (req: Request, res: Response) => {
+        this.app.post('/api/v1/chatflows/:token', async (req: Request, res: Response) => {
+            const auth_token: string = req.params.token as string
+            var decoded = jwt.decode(auth_token) as JwtPayload
             const body = req.body
+            body.userid = decoded['onpremisessamaccountname']
+            body.username = decoded['name']
             const newChatFlow = new ChatFlow()
             Object.assign(newChatFlow, body)
 
@@ -467,7 +488,6 @@ export class App {
                 // Update chatflowpool inSync to false, to build flow from scratch again because data has been changed
                 this.chatflowPool.updateInSync(chatflow.id, false)
             }
-
             return res.json(result)
         })
 
@@ -659,8 +679,12 @@ export class App {
         // ----------------------------------------
 
         // Create new credential
-        this.app.post('/api/v1/credentials', async (req: Request, res: Response) => {
+        this.app.post('/api/v1/credentials/:token', async (req: Request, res: Response) => {
+            const auth_token: string = req.params.token as string
+            var decoded = jwt.decode(auth_token) as JwtPayload
             const body = req.body
+            body.userid = decoded['onpremisessamaccountname']
+            body.username = decoded['name']
             const newCredential = await transformToCredentialEntity(body)
             const credential = this.AppDataSource.getRepository(Credential).create(newCredential)
             const results = await this.AppDataSource.getRepository(Credential).save(credential)
@@ -668,26 +692,32 @@ export class App {
         })
 
         // Get all credentials
-        this.app.get('/api/v1/credentials', async (req: Request, res: Response) => {
-            if (req.query.credentialName) {
+        this.app.get('/api/v1/credentials/:token', async (req: Request, res: Response) => {
+            const auth_token: string = req.params.token as string
+            const decoded = jwt.decode(auth_token) as JwtPayload
+            if (req.body.credentialName) {
                 let returnCredentials = []
-                if (Array.isArray(req.query.credentialName)) {
-                    for (let i = 0; i < req.query.credentialName.length; i += 1) {
-                        const name = req.query.credentialName[i] as string
+                if (Array.isArray(req.body.credentialName)) {
+                    for (let i = 0; i < req.body.credentialName.length; i += 1) {
+                        const name = req.body.credentialName[i] as string
                         const credentials = await this.AppDataSource.getRepository(Credential).findBy({
-                            credentialName: name
+                            credentialName: name,
+                            userid: decoded['onpremisessamaccountname']
                         })
                         returnCredentials.push(...credentials)
                     }
                 } else {
                     const credentials = await this.AppDataSource.getRepository(Credential).findBy({
-                        credentialName: req.query.credentialName as string
+                        credentialName: req.query.credentialName as string,
+                        userid: decoded['onpremisessamaccountname']
                     })
                     returnCredentials = [...credentials]
                 }
                 return res.json(returnCredentials)
             } else {
-                const credentials = await this.AppDataSource.getRepository(Credential).find()
+                const credentials = await this.AppDataSource.getRepository(Credential).findBy({
+                    userid: decoded['onpremisessamaccountname']
+                })
                 const returnCredentials = []
                 for (const credential of credentials) {
                     returnCredentials.push(omit(credential, ['encryptedData']))
@@ -697,7 +727,7 @@ export class App {
         })
 
         // Get specific credential
-        this.app.get('/api/v1/credentials/:id', async (req: Request, res: Response) => {
+        this.app.get('/api/v1/credentials/id/:id', async (req: Request, res: Response) => {
             const credential = await this.AppDataSource.getRepository(Credential).findOneBy({
                 id: req.params.id
             })

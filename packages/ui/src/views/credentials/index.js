@@ -166,11 +166,15 @@ const Credentials = () => {
     const onConfirm = () => {
         setShowCredentialListDialog(false)
         setShowSpecificCredentialDialog(false)
-        getAllCredentialsApi.request()
+        if (localStorage.getItem('token') !== null) {
+            getAllCredentialsApi.request(localStorage.getItem('token'))
+        }
     }
 
     useEffect(() => {
-        getAllCredentialsApi.request()
+        if (localStorage.getItem('token') !== null) {
+            getAllCredentialsApi.request(localStorage.getItem('token'))
+        }
         getAllComponentsCredentialsApi.request()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])

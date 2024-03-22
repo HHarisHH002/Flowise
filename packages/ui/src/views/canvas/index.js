@@ -216,7 +216,10 @@ const Canvas = () => {
                     isPublic: false,
                     flowData
                 }
-                createNewChatflowApi.request(newChatflowBody)
+                if (localStorage.getItem('token') !== null) {
+                    const token = localStorage.getItem('token')
+                    createNewChatflowApi.request(token, newChatflowBody)
+                }
             } else {
                 const updateBody = {
                     name: chatflowName,

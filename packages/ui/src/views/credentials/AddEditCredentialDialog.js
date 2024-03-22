@@ -101,7 +101,7 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm }) => 
                 credentialName: componentCredential.name,
                 plainDataObj: credentialData
             }
-            const createResp = await credentialsApi.createCredential(obj)
+            const createResp = await credentialsApi.createCredential(localStorage.getItem('token'), obj)
             if (createResp.data) {
                 enqueueSnackbar({
                     message: 'New Credential added',

@@ -1,12 +1,12 @@
 import client from './client'
 
-const getAllChatflows = () => client.get('/chatflows')
+const getAllChatflows = (token) => client.get(`/chatflows/${token}`)
 
-const getSpecificChatflow = (id) => client.get(`/chatflows/${id}`)
+const getSpecificChatflow = (id) => client.get(`/chatflows/id/${id}`)
 
 const getSpecificChatflowFromPublicEndpoint = (id) => client.get(`/public-chatflows/${id}`)
 
-const createNewChatflow = (body) => client.post(`/chatflows`, body)
+const createNewChatflow = (token, body) => client.post(`/chatflows/${token}`, body)
 
 const updateChatflow = (id, body) => client.put(`/chatflows/${id}`, body)
 
