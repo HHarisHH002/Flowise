@@ -207,6 +207,8 @@ export type ICredentialDataDecrypted = ICommonObject
 export interface ICredentialReqBody {
     name: string
     credentialName: string
+    userid: string
+    username: string
     plainDataObj: ICredentialDataDecrypted
 }
 

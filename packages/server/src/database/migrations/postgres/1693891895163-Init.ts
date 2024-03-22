@@ -6,6 +6,8 @@ export class Init1693891895163 implements MigrationInterface {
             `CREATE TABLE IF NOT EXISTS chat_flow (
                 id uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "name" varchar NOT NULL,
+                "userid" varchar NOT NULL,
+                "username" varchar NOT NULL,
                 "flowData" text NOT NULL,
                 deployed bool NULL,
                 "isPublic" bool NULL,
@@ -32,6 +34,8 @@ export class Init1693891895163 implements MigrationInterface {
             `CREATE TABLE IF NOT EXISTS credential (
                 id uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "name" varchar NOT NULL,
+                "userid" varchar NOT NULL,
+                "username" varchar NOT NULL,
                 "credentialName" varchar NOT NULL,
                 "encryptedData" varchar NOT NULL,
                 "createdDate" timestamp NOT NULL DEFAULT now(),

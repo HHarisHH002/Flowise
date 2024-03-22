@@ -10,6 +10,12 @@ export class Credential implements ICredential {
     @Column()
     name: string
 
+    @Column({ type: 'text' })
+    userid: string
+
+    @Column({ type: 'text' })
+    username: string
+
     @Column()
     credentialName: string
 
