@@ -36,8 +36,8 @@ export class LlmGw extends BaseChatModel<LlmGwOptions> {
 
     async _generate(
         messages: BaseMessage[],
-        options: this['ParsedCallOptions'],
-        runManager?: CallbackManagerForLLMRun
+        _options: this['ParsedCallOptions'],
+        _runManager?: CallbackManagerForLLMRun
     ): Promise<ChatResult> {
         if (!messages.length) {
             throw new Error('No messages provided.')

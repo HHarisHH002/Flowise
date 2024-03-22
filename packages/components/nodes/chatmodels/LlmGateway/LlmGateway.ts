@@ -4,10 +4,13 @@ import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../
 import { BaseLLMParams } from '@langchain/core/language_models/llms'
 import { BaseCache } from 'langchain/schema'
 import { LlmGw, LlmGwParams } from './llm'
+import { type BaseMessage } from '@langchain/core/messages'
 
 interface llmgatewayConfig {
     LlmGatewayApiKey?: string
 }
+type LLMRoleEnum = 'system' | 'assistant' | 'user' | 'function' | 'tool'
+export declare function messageToOpenAIRole(message: BaseMessage): LLMRoleEnum
 
 class LlmGateway_ChatModels implements INode {
     label: string
