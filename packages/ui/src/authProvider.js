@@ -7,7 +7,7 @@ export const authProvider = new MsalAuthProvider(
     {
         auth: {
             authority: 'https://login.microsoftonline.com/906aefe9-76a7-4f65-b82d-5ec20775d5aa',
-            clientId: 'e31c75ef-081b-4ecf-ab67-c2ef96170da4',
+            clientId: 'b113ebb6-c0be-47b7-8b3d-57ab2e28d203',
             postLogoutRedirectUri: window.location.origin + '/chatflows',
             redirectUri: window.location.origin + '/chatflows',
             validateAuthority: true,
