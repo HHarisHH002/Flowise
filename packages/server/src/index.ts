@@ -3,6 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import cors from 'cors'
 import http from 'http'
+import CryptoJS from 'crypto-js'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import * as fs from 'fs'
 import basicAuth from 'express-basic-auth'
@@ -83,6 +84,24 @@ import { Client } from 'langchainhub'
 import { parsePrompt } from './utils/hub'
 import { Telemetry } from './utils/telemetry'
 import { Variable } from './database/entities/Variable'
+
+async function encryptedData(dataToEncrypt: string) {
+    const encryptKey = await getEncryptionKey()
+    const fixedIV = 'flowiseInitialization Vector'
+    return CryptoJS.AES.encrypt(dataToEncrypt, CryptoJS.enc.Utf8.parse(encryptKey), {
+        iv: CryptoJS.enc.Utf8.parse(fixedIV),
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    }).toString()
+}
+
+async function decryptedData(dataToDecrypt: string) {
+    const encryptKey = await getEncryptionKey()
+    const fixedIV = 'flowiseInitialization Vector'
+    return CryptoJS.AES.decrypt(dataToDecrypt, CryptoJS.enc.Utf8.parse(encryptKey), {
+        iv: CryptoJS.enc.Utf8.parse(fixedIV)
+    }).toString(CryptoJS.enc.Utf8)
+}
 
 export class App {
     app: express.Application
@@ -374,7 +393,7 @@ export class App {
             const auth_token: string = req.params.token as string
             const decoded = jwt.decode(auth_token) as JwtPayload
             const chatflow = await this.AppDataSource.getRepository(ChatFlow).findBy({
-                userid: decoded['onpremisessamaccountname']
+                userid: await encryptedData(decoded['onpremisessamaccountname'])
             })
             if (chatflow) return res.json(chatflow)
             return res.status(404).send(`Chatflows not found`)
@@ -444,8 +463,8 @@ export class App {
             const auth_token: string = req.params.token as string
             var decoded = jwt.decode(auth_token) as JwtPayload
             const body = req.body
-            body.userid = decoded['onpremisessamaccountname']
-            body.username = decoded['name']
+            body.userid = await encryptedData(decoded['onpremisessamaccountname'])
+            body.username = await encryptedData(decoded['name'])
             const newChatFlow = new ChatFlow()
             Object.assign(newChatFlow, body)
 
@@ -683,8 +702,8 @@ export class App {
             const auth_token: string = req.params.token as string
             var decoded = jwt.decode(auth_token) as JwtPayload
             const body = req.body
-            body.userid = decoded['onpremisessamaccountname']
-            body.username = decoded['name']
+            body.userid = await encryptedData(decoded['onpremisessamaccountname'])
+            body.username = await encryptedData(decoded['name'])
             const newCredential = await transformToCredentialEntity(body)
             const credential = this.AppDataSource.getRepository(Credential).create(newCredential)
             const results = await this.AppDataSource.getRepository(Credential).save(credential)
@@ -702,21 +721,21 @@ export class App {
                         const name = req.body.credentialName[i] as string
                         const credentials = await this.AppDataSource.getRepository(Credential).findBy({
                             credentialName: name,
-                            userid: decoded['onpremisessamaccountname']
+                            userid: await encryptedData(decoded['onpremisessamaccountname'])
                         })
                         returnCredentials.push(...credentials)
                     }
                 } else {
                     const credentials = await this.AppDataSource.getRepository(Credential).findBy({
                         credentialName: req.query.credentialName as string,
-                        userid: decoded['onpremisessamaccountname']
+                        userid: await encryptedData(decoded['onpremisessamaccountname'])
                     })
                     returnCredentials = [...credentials]
                 }
                 return res.json(returnCredentials)
             } else {
                 const credentials = await this.AppDataSource.getRepository(Credential).findBy({
-                    userid: decoded['onpremisessamaccountname']
+                    userid: await encryptedData(decoded['onpremisessamaccountname'])
                 })
                 const returnCredentials = []
                 for (const credential of credentials) {

@@ -23,7 +23,6 @@ class Init extends React.Component {
                     if (isAuthenticated) {
                         if (localStorage.getItem('account') === null || localStorage.getItem('token') === null) {
                             localStorage.setItem('account', JSON.stringify(authProvider.getAccount()))
-                            localStorage.setItem('user', authProvider.getAccount().name)
                             authProvider.getIdToken().then((token) => {
                                 localStorage.setItem('token', token.idToken.rawIdToken)
                             })
